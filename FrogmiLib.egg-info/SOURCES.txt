@@ -1,0 +1,8 @@
+README.md
+setup.py
+FrogmiLib/__init__.py
+FrogmiLib/funciones.py
+FrogmiLib.egg-info/PKG-INFO
+FrogmiLib.egg-info/SOURCES.txt
+FrogmiLib.egg-info/dependency_links.txt
+FrogmiLib.egg-info/top_level.txt
