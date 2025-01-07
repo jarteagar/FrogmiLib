@@ -1,10 +1,10 @@
 #from .funciones import getToken
 
 def OSVersion():
-    det = """Version 1.0 =============
+    det = """Version 2.2 =============
     Libreria para agilizar el uso de las api de frogmi 5.1.2025
     USO:
-    Consultar con John Arteaga
+    Consultar con John Arteaga!!!
     
     Nota importante _____
     Para modificar las columnas que se retornan, se debe editar el archivo funciones.py
