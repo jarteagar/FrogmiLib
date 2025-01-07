@@ -1,7 +1,26 @@
 import requests
 import json
 
+def __init__(self):
+    self.auth = None  # Aquí se almacenarán las credenciales
 
+def getSubData(url,token,UUID):
+
+    authHeader = {
+        "Authorization": "Bearer %s" %token,
+        "User-Agent": "API-CLIENT",
+        "X-Company-UUID": UUID,
+        "Content-Type": 'application/vnd.api+json',
+        }
+    queryURL = url
+    response = requests.get(queryURL,headers=authHeader)
+
+    if response.status_code != 200:
+        return ""
+    else:
+        rawdata = json.loads(response.text)
+        return rawdata
+    
 #para datos que sean menor o iguala 1000 registros, si fuea de más usar la funcion que hace iteraciones (getDataV2)
 def getData(urlApi,urlFilter,token,UUID):
 
@@ -11,7 +30,12 @@ def getData(urlApi,urlFilter,token,UUID):
         "X-Company-UUID": UUID,
         "Content-Type": 'application/vnd.api+json',
         }
-    queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?filters{urlFilter}&per_page=1000'
+    if urlFilter == '':
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?per_page=5'
+    else:
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?filters{urlFilter}&per_page=1000'
+
+    print(queryURL)
     response = requests.get(queryURL,headers=authHeader)
 
     if response.status_code != 200:
@@ -47,9 +71,39 @@ def getStores(rawdata):
 
     return extracted_data
 
+def getUsers(rawdata,token,UUID):
+    extracted_data = []
+    for item in rawdata.get("data",[]):
+        data_dic ={
+            "id":item.get("id",None),
+            "name":item.get("attributes",{}).get("name",None),
+            "last_name":item.get("attributes",{}).get("last_name",None),
+            "email":item.get("attributes",{}).get("email",None),
+            "country":item.get("attributes",{}).get("country",None),
+            "active":item.get("attributes",{}).get("active",None),
+            "accountable_areas":""
+        }
+        
+        url_ = item.get("relationships",{}).get("accountable_areas",{}).get("links",{}).get("related",None)
+        #relationships
+        rw = getSubData(url_,token,UUID)
+
+        for itm in rw.get("data",[]):
+            data_dic["accountable_areas"] = itm.get("id",None)
+        
+        extracted_data.append(data_dic)
+
+    return extracted_data
 
 
 '''
+rw = getData('users','','e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
+dt = getUsers(rw,'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
+#print(rw)
+print(dt)
+print("terminado")
+
+
 def getStores(rawdata):
     extracted_data =[]
 
