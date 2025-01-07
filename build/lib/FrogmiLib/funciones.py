@@ -20,6 +20,36 @@ def getData(urlApi,urlFilter,token,UUID):
         rawdata = json.loads(response.text)
         return rawdata
 
+def safe_get(data, *keys):
+    for key in keys:
+        data = data.get(key, None)
+        if data is None:
+            return None
+    return data
+
+def getStores(rawdata):
+    extracted_data = []
+
+    for item in rawdata.get("data", []):
+        data_dic = {
+            "id": safe_get(item, "id"),
+            "name": safe_get(item, "attributes", "name"),
+            "code": safe_get(item, "attributes", "code"),
+            "active": 1 if safe_get(item, "attributes", "active") else 0,  # Cambiamos el true =1, false=0
+            "full_address": safe_get(item, "attributes", "full_address"),
+            "latitude": safe_get(item, "attributes", "coordinates", "latitude"),
+            "longitude": safe_get(item, "attributes", "coordinates", "longitude"),
+            "created_at": safe_get(item, "attributes", "created_at"),
+            "brandId": safe_get(item, "relationships", "brands", "data", "id"),
+            "zoneId": safe_get(item, "relationships", "zones", "data", "id")
+        }
+        extracted_data.append(data_dic)
+
+    return extracted_data
+
+
+
+'''
 def getStores(rawdata):
     extracted_data =[]
 
@@ -39,7 +69,9 @@ def getStores(rawdata):
         extracted_data.append(data_dic)
     return extracted_data
 
-'''
+
+
+
 rw = getData('stores?include=zones,brands','','e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
 #print(rw)
 dt = getStores(rw)
