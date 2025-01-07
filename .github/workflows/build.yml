@@ -19,10 +19,6 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Clean dist directory
-        run: |
-          rm -rf dist/*
-
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
