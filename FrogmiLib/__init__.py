@@ -84,12 +84,13 @@ def OSVersion():
     ACTIVIES **************************
     page = 1
     k = 0
-    while k <=4:
-        dt = getActivites('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"",page,5)
+    while k <=1:
+        dt = getActivites('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"",page,2)
         print(dt)
         k = k + 1
         print(page)
         page = page + 1
+
             
     """
  
