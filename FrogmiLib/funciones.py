@@ -1,9 +1,6 @@
 import requests
 import json
 
-def __init__(self):
-    self.auth = None  # Aquí se almacenarán las credenciales
-
 def getSubData(url,token,UUID):
 
     authHeader = {
@@ -23,7 +20,6 @@ def getSubData(url,token,UUID):
     
 #para datos que sean menor o iguala 1000 registros, si fuea de más usar la funcion que hace iteraciones (getDataV2)
 
-
 #obtiene data de una cantidad definida de registros ==============================================
 def getData(urlApi,urlFilter,token,UUID,records):
 
@@ -40,8 +36,6 @@ def getData(urlApi,urlFilter,token,UUID,records):
         queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&per_page={records}'
 
 
-
-    print(queryURL)
     response = requests.get(queryURL,headers=authHeader)
 
     if response.status_code != 200:
@@ -92,8 +86,6 @@ def getDataById(urlApi,urlFilter,scroll_id,token,UUID,records):
         #ulr para la segunda llamada
         queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&per_page={records}&scroll_id={scroll_id}&dir=desc'
     
-    print(queryURL)
-
     response = requests.get(queryURL,headers=authHeader)
 
     if response.status_code != 200:
@@ -102,6 +94,12 @@ def getDataById(urlApi,urlFilter,scroll_id,token,UUID,records):
         rawdata = json.loads(response.text)
         return rawdata
 
+def safe_get(data, *keys):
+    for key in keys:
+        data = data.get(key, None)
+        if data is None:
+            return None
+    return data
 
 #activites and questionary
 def getActivites(token,UUID,urlFilter,page,records):
@@ -131,7 +129,6 @@ def getActivites(token,UUID,urlFilter,page,records):
             "tag_name":""
         }
         
-
         #completando los tags edn data_dic
         tags = item.get("attributes",{}) .get("tags")
         if tags:
@@ -163,7 +160,7 @@ def getActivites(token,UUID,urlFilter,page,records):
                 extracted_qst.append(data_qst) #acumulando las preguntas
 
                 #recolectando las alternativas asociadas:
-                rw_alter = iteq.get("relationships",{}).get("alternatives",{})
+                rw_alter = iteq.get("relationships",{}).get("alternatives")  #("alternatives",{})
                 for itm in rw_alter.get("data",[]):
                     dic_alt={
                         "activityid":id_,
@@ -177,15 +174,13 @@ def getActivites(token,UUID,urlFilter,page,records):
                     extracted_alt.append(dic_alt) #acumulando alternativas
                 
                 #recolectando tag asociados:
-                rw_tags = iteq.get("relationships",{}).get("tags",{})
+                rw_tags = iteq.get("relationships",{}).get("tags") #("tags",{})
                 for itm in rw_tags.get("data",[]):
                     dic_tag={
                         "activityid":id_,
                         "tagid":itm.get("id",None)
                     }
                     extracted_tag.append(dic_tag)
-
-
 
     dic_data ={
         "act":extracted_act,
@@ -197,19 +192,6 @@ def getActivites(token,UUID,urlFilter,page,records):
     extracted_data.append(dic_data)
 
     return extracted_data
-
-
-page = 1
-k = 0
-while k <=1:
-    dt = getActivites('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"",page,2)
-    print(dt)
-    k = k + 1
-    print(page)
-    page = page + 1
-
-
-
 
 def getEvents(token,UUID,urlFilter,page,records):
     urlApi ="store_beat/events"
@@ -249,14 +231,6 @@ def getEvents(token,UUID,urlFilter,page,records):
     extracted_data.append(data_dic2)
 
     return extracted_data
-
-#'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0'   
-# ####    3b9ebd89-db42-40a3-8e46-db865edf3dd6 8111ccba-8b27-4c61-b390-cace6f981ede
-######     3b9ebd89-db42-40a3-8e46-db865edf3dd6 8111ccba-8b27-4c61-b390-cace6f981ede
-
-
-
-
 
 def getResults(token,UUID,urlFilter,scroll_id,records):
     urlApi ="store_beat/results"
@@ -340,12 +314,8 @@ def getResults(token,UUID,urlFilter,scroll_id,records):
 
     return extracted_data2
 
-
-
-
 def getProducts(token,UUID,nro_page,per_page):
     urlApi="products"
-    urlFilter=''
 
     rw = getDataByPage(urlApi,'',token,UUID,nro_page,per_page)
 
@@ -375,14 +345,6 @@ def getProducts(token,UUID,nro_page,per_page):
 
     return extracted_data_source
 
-
-
-def safe_get(data, *keys):
-    for key in keys:
-        data = data.get(key, None)
-        if data is None:
-            return None
-    return data
 
 def getTags(rawdata,token,UUID):
     extracted_data =[]
@@ -416,11 +378,6 @@ def getTags(rawdata,token,UUID):
         extracted_data.append(data_dic)
     
     return extracted_data
-#'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0'
-
-
-        
-
 
 def getStores(rawdata):
     extracted_data = []
@@ -439,8 +396,8 @@ def getStores(rawdata):
             "zoneId": safe_get(item, "relationships", "zones", "data", "id")
         }
         extracted_data.append(data_dic)
-    return extracted_data
 
+    return extracted_data
 
 def getAreas(rawdata):
     extracted_data = []
@@ -454,7 +411,6 @@ def getAreas(rawdata):
         extracted_data.append(data_dic)
     
     return extracted_data
-
 
 def getUsers(rawdata,token,UUID):
     extracted_data = []

@@ -1,4 +1,16 @@
-#from .funciones import getToken
+# Importamos las funciones de 'funciones.py' 
+from .funciones import (
+    getToken,
+    getData,
+    getStores,
+    getAreas,
+    getUsers,
+    getProducts,
+    getTags,
+    getResults,
+    getEvents,
+    getActivites
+)
 
 def OSVersion():
     det = """
@@ -74,7 +86,7 @@ def OSVersion():
         if data:
 
             print(data)
-            print(f"= NEXT EVENT {reco}======================================================================================!!!!")
+            print(f"= NEXT EVENT ======================================================================================!!!!")
             page_ = page_ + 1
             k = k + 1
         else:
