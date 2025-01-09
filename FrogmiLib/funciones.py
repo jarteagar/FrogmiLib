@@ -22,7 +22,10 @@ def getSubData(url,token,UUID):
         return rawdata
     
 #para datos que sean menor o iguala 1000 registros, si fuea de más usar la funcion que hace iteraciones (getDataV2)
-def getData(urlApi,urlFilter,token,UUID):
+
+
+#obtiene data de una cantidad definida de registros ==============================================
+def getData(urlApi,urlFilter,token,UUID,records):
 
     authHeader = {
         "Authorization": "Bearer %s" %token,
@@ -30,10 +33,13 @@ def getData(urlApi,urlFilter,token,UUID):
         "X-Company-UUID": UUID,
         "Content-Type": 'application/vnd.api+json',
         }
+
     if urlFilter == '':
-        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?per_page=5'
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?per_page={records}'
     else:
-        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?filters{urlFilter}&per_page=1000'
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&per_page={records}'
+
+
 
     print(queryURL)
     response = requests.get(queryURL,headers=authHeader)
@@ -44,12 +50,377 @@ def getData(urlApi,urlFilter,token,UUID):
         rawdata = json.loads(response.text)
         return rawdata
 
+#obtiene data tomando en cuenta PAGINACION =======================================================
+def getDataByPage(urlApi,urlFilter,token,UUID,page,records):
+
+    authHeader = {
+        "Authorization": "Bearer %s" %token,
+        "User-Agent": "API-CLIENT",
+        "X-Company-UUID": UUID,
+        "Content-Type": 'application/vnd.api+json',
+        }
+
+    if urlFilter == '':
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?page={page}&per_page={records}'
+    else:
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&page={page}&per_page={records}'
+    
+    response = requests.get(queryURL,headers=authHeader)
+
+    if response.status_code != 200:
+        return ""
+    else:
+        rawdata = json.loads(response.text)
+        return rawdata
+
+#obtiene data tomando en cuenta SCROLL_ID =======================================================
+#para este ENDPOINT debe pasarse el FILTER y RECORDS(per_page) en la primera consulta
+#en la segunda consulta se pasa adiciona el SCROLL_ID y el orden dir=desc
+def getDataById(urlApi,urlFilter,scroll_id,token,UUID,records):
+
+    authHeader = {
+        "Authorization": "Bearer %s" %token,
+        "User-Agent": "API-CLIENT",
+        "X-Company-UUID": UUID,
+        "Content-Type": 'application/vnd.api+json',
+        }
+
+    if scroll_id == '':
+        #url para la primera llamada
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&per_page={records}'
+    else:
+        #ulr para la segunda llamada
+        queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&per_page={records}&scroll_id={scroll_id}&dir=desc'
+    
+    print(queryURL)
+
+    response = requests.get(queryURL,headers=authHeader)
+
+    if response.status_code != 200:
+        return ""
+    else:
+        rawdata = json.loads(response.text)
+        return rawdata
+
+
+#activites and questionary
+def getActivites(token,UUID,urlFilter,page,records):
+    urlApi ="store_beat/activities"
+    rw = getDataByPage(urlApi,urlFilter,token,UUID,page,records)
+
+    extracted_data = []
+
+    extracted_act =[]
+    extracted_qst =[]
+    extracted_alt =[]
+    extracted_tag =[]
+
+    for item in rw.get("data",[]):
+        id_ = item.get("id",None) #este es el id de la actividad que se usa para las alternativas y los tags
+
+        data_dic ={
+            "id":id_, 
+            "type":item.get("type",None),
+            "name":item.get("attributes",{}).get("name",None),
+            "activity_type":item.get("attributes",{}).get("activity_type",None),
+            "schedule_type":item.get("attributes",{}).get("schedule_type",None),
+            "state":item.get("attributes",{}).get("state",None),
+            "instructions":item.get("attributes",{}).get("instructions",None),
+            "created_at":item.get("attributes",{}).get("created_at",None),
+            "tag_uuid":"",
+            "tag_name":""
+        }
+        
+
+        #completando los tags edn data_dic
+        tags = item.get("attributes",{}) .get("tags")
+        if tags:
+            for tag in tags:
+                data_dic["tag_uuid"] = tag.get("uuid",None)
+                data_dic["tag_name"] = tag.get("name",None)
+
+        extracted_act.append(data_dic) #acumulando actividades
+
+        #revisando el questionario asociado a la actividad
+        #"related": "https://neo.frogmi.com/api/v3/store_beat/activities/faef1a81-93bf-4591-b5b8-9e7a9cb7b7be/questions"
+        url_ = item.get("relationships",{}).get("questions",{}).get("links",{}).get("related")
+        if url_:
+            rw = getSubData(url_,token,UUID)
+            for iteq in rw.get("data",[]):
+                data_qst ={
+                    "activityid":id_,
+                    "questionid":iteq.get("id",None),
+                    "type":iteq.get("type",None),
+                    "name":iteq.get("attributes",{}).get("name",None),
+                    "question_type":iteq.get("attributes",{}).get("question_type",None),
+                    "order":iteq.get("attributes",{}).get("order",None),
+                    "order_tree":iteq.get("attributes",{}).get("order_tree",None),
+                    "min_boundary":iteq.get("attributes",{}).get("min_boundary",None),
+                    "max_boundary":iteq.get("attributes",{}).get("max_boundary",None),
+                    "input_regex":iteq.get("attributes",{}).get("input_regex",None),
+                    "expression":iteq.get("attributes",{}).get("expression",None)
+                }
+                extracted_qst.append(data_qst) #acumulando las preguntas
+
+                #recolectando las alternativas asociadas:
+                rw_alter = iteq.get("relationships",{}).get("alternatives",{})
+                for itm in rw_alter.get("data",[]):
+                    dic_alt={
+                        "activityid":id_,
+                        "alternativeid":itm.get("id",None),
+                        "type":itm.get("type",None),
+                        "name":itm.get("attributes",{}).get("name",None),
+                        "value":itm.get("attributes",{}).get("value",None),
+                        "accomplishment":itm.get("attributes",{}).get("accomplishment",None),
+                        "order":itm.get("attributes",{}).get("order",None)
+                    }
+                    extracted_alt.append(dic_alt) #acumulando alternativas
+                
+                #recolectando tag asociados:
+                rw_tags = iteq.get("relationships",{}).get("tags",{})
+                for itm in rw_tags.get("data",[]):
+                    dic_tag={
+                        "activityid":id_,
+                        "tagid":itm.get("id",None)
+                    }
+                    extracted_tag.append(dic_tag)
+
+
+
+    dic_data ={
+        "act":extracted_act,
+        "qst":extracted_qst,
+        "alt":extracted_alt,
+        "tag":extracted_tag
+    }
+
+    extracted_data.append(dic_data)
+
+    return extracted_data
+
+
+page = 1
+k = 0
+while k <=1:
+    dt = getActivites('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"",page,2)
+    print(dt)
+    k = k + 1
+    print(page)
+    page = page + 1
+
+
+
+
+def getEvents(token,UUID,urlFilter,page,records):
+    urlApi ="store_beat/events"
+    #urlFilter="filters[period][from]=2024-01-07&filters[period][to]=2024-01-07"
+ 
+    #rw = getDataById(urlApi,urlFilter,scroll_id,token,UUID,records)
+    rw = getDataByPage(urlApi,urlFilter,token,UUID,page,records)
+
+    extracted_data = []
+    extracted_event =[]
+
+    for item in rw.get("data",[]):
+        data_dic={
+            "id":item.get("id",None),
+            "type":item.get("type",None),
+            "store_beat":item.get("attributes",{}).get("store_beat",None),
+            "activityId":item.get("attributes",{}).get("activity",{}).get("id",None),
+            "storeId":item.get("attributes",{}).get("store",{}).get("id",None),
+            "userId":item.get("attributes",{}).get("user",{}).get("id",None),
+            "finished_at":item.get("attributes",{}).get("date",{}).get("finished_at",None),
+            "uploaded_at":item.get("attributes",{}).get("date",{}).get("uploaded_at",None),
+            "started_at":item.get("attributes",{}).get("date",{}).get("started_at",None),
+            "created_at":item.get("attributes",{}).get("date",{}).get("created_at",None),
+            "lat":item.get("attributes",{}).get("geolocation",{}).get("lat",None),
+            "lon":item.get("attributes",{}).get("geolocation",{}).get("lon",None)
+        }
+        extracted_event.append(data_dic)
+
+    #scroll_id_ = rw['links'].get('scroll_id', 0)
+    totpag = rw['meta']['pagination'].get('total', 0)
+    
+    data_dic2 ={
+        "data":extracted_event,
+        "records":totpag
+    }
+
+    extracted_data.append(data_dic2)
+
+    return extracted_data
+
+#'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0'   
+# ####    3b9ebd89-db42-40a3-8e46-db865edf3dd6 8111ccba-8b27-4c61-b390-cace6f981ede
+######     3b9ebd89-db42-40a3-8e46-db865edf3dd6 8111ccba-8b27-4c61-b390-cace6f981ede
+
+
+
+
+
+def getResults(token,UUID,urlFilter,scroll_id,records):
+    urlApi ="store_beat/results"
+    #urlFilter="filters[period][from]=2024-01-07&filters[period][to]=2024-01-07"
+ 
+    rw = getDataById(urlApi,urlFilter,scroll_id,token,UUID,records)
+    extracted_data =[]  #pagina
+    extracted_data2 =[] #acumulado_pagina
+
+    extracted_resul = []
+    extracted_answe =[]
+    extracted_alter =[]
+
+    for item in rw.get("data",[]):
+
+        id_ = item.get("id",None)
+        idq_ = item.get("attributes",{}).get("question_uuid",None)
+
+        #DATOS DEL RESULT
+        data_dic={
+            "type":item.get("type",None),
+            "id":id_,
+            "name":item.get("attributes",{}).get("name",None),
+            "question_type":item.get("attributes",{}).get("question_type",None),
+            "question_uuid":idq_,
+            "repetition_node":item.get("attributes",{}).get("repetition_node",None),
+            "question_order":item.get("attributes",{}).get("question_order",None),
+            "page_title":item.get("attributes",{}).get("page_title",None),
+            "page_order":item.get("attributes",{}).get("page_order",None),
+            "page_path_order":item.get("attributes",{}).get("page_path_order",None),
+            "execution_date":item.get("attributes",{}).get("execution",{}).get("execution_date",None),
+            "finished_at":item.get("attributes",{}).get("execution",{}).get("finished_at",None),
+            "comment":item.get("attributes",{}).get("comment",None),
+            "store_beat_events":item.get("relationships",{}).get("store_beat_events",{}).get("data",{}).get("id",None)
+        }
+        extracted_resul.append(data_dic)
+
+
+        #RESPUESTAS DEL RESULT
+        answers = item.get("attributes",{}).get("answer",[])
+        if isinstance(answers, list):
+            for rpta in answers:
+                answer_dic ={
+                    "storeBeatResultId":id_, #id del resultado
+                    "question_uuid":idq_, #id de la pregunta
+                    "alternativeid":rpta #id de la(s)  respuesta(s)(caso multiplechoice) --> este valor conincide con el ID de la ALTERNATIVA
+                }
+                extracted_answe.append(answer_dic)
+
+        
+        #ALTERNATIVAS DEL RESULT
+        alter = item.get("attributes",{}).get("alternatives",{}).get("data",[])
+        if isinstance(alter, list):
+            for alte in alter:
+                alter_dic={
+                    "storeBeatResultId":id_, #id del resultado
+                    "question_uuid":idq_, #id de la pregunta
+                    "alternativeid":alte.get("id",None), #este es el "answerid"
+                    "alternativeType":alte.get("type",None),
+                    "alternativeName":alte.get("attributes",{}).get("name",None),
+                    "alternativeValue":alte.get("attributes",{}).get("value",None),
+                    "accomplishment":alte.get("attributes",{}).get("accomplishment",None)
+                }
+                extracted_alter.append(alter_dic)
+
+        data_dic2 ={
+            "resul":extracted_resul,
+            "answe":extracted_answe,
+            "alter":extracted_alter
+        }
+
+        extracted_data.append(data_dic2)
+
+    scroll_id_ = rw['links'].get('scroll_id', 0)
+
+    data_dic = {
+        "data":extracted_data,
+        "scroll_id": scroll_id_
+    }
+    extracted_data2.append(data_dic)
+
+    return extracted_data2
+
+
+
+
+def getProducts(token,UUID,nro_page,per_page):
+    urlApi="products"
+    urlFilter=''
+
+    rw = getDataByPage(urlApi,'',token,UUID,nro_page,per_page)
+
+    extracted_data =[]
+    extracted_data_source =[]
+
+    for item in rw.get("data",[]):
+        data_dic ={
+            "id":item.get("id",None),
+            "name":item.get("attributes",{}).get("name",None),
+            "sku":item.get("attributes",{}).get("sku",None),
+            "ean":item.get("attributes",{}).get("ean",None),
+            "created_at":item.get("attributes",{}).get("created_at",None),
+            "active":1 if item.get("attributes",{}).get("active",None) else 0,
+            "categoriasId":item.get("relationships",{}).get("categories",{}).get("data",{}).get("id",None)
+        }
+        extracted_data.append(data_dic)
+    
+    totpag = rw['meta']['pagination'].get('total', 0)
+    
+    data_dic ={
+        "data":extracted_data,
+        "records":totpag
+    }
+
+    extracted_data_source.append(data_dic)
+
+    return extracted_data_source
+
+
+
 def safe_get(data, *keys):
     for key in keys:
         data = data.get(key, None)
         if data is None:
             return None
     return data
+
+def getTags(rawdata,token,UUID):
+    extracted_data =[]
+
+    for item in rawdata.get("data",[]):
+        data_dic ={
+            "id":item.get("id",None),
+            "name":item.get("attributes").get("name",None),
+            "active":1 if item.get("attributes").get("active",None) else 0,
+            "tag_type": item.get("attributes").get("tag_type",None),
+            "sub_kpi":"",
+            "sub_name":"",
+            "sub_tag_type":""
+        }
+
+        #complementando datos del KPI si fuera el caso:
+        subkpi = item.get("relationships",{}) .get("tags")
+        #print(f'el subkpi ===> {subkpi}')
+
+        url_ =""
+        if subkpi:
+            for itm in subkpi:
+                data_dic["sub_kpi"] = itm.get("id",None)  #el id
+                url_ = itm.get("links",{}).get("related",None)
+
+        if url_ != "":
+            rw = getSubData(url_,token,UUID)
+            data_dic["sub_name"] = rw.get("data",{}).get("attributes",{}).get("name",None) #nombre
+            data_dic["sub_tag_type"] = rw.get("data",{}).get("attributes",{}).get("tag_type",None) #tipo
+        
+        extracted_data.append(data_dic)
+    
+    return extracted_data
+#'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0'
+
+
+        
+
 
 def getStores(rawdata):
     extracted_data = []
@@ -68,8 +439,22 @@ def getStores(rawdata):
             "zoneId": safe_get(item, "relationships", "zones", "data", "id")
         }
         extracted_data.append(data_dic)
-
     return extracted_data
+
+
+def getAreas(rawdata):
+    extracted_data = []
+    for item in rawdata.get("data",[]):
+        data_dic ={
+            "id": item.get("id",None),
+            "name":item.get("attributes",{}).get("name",None),
+            "code":item.get("attributes",{}).get("code",None),
+            "cluster_definitionId":item.get("relationships",{}).get("cluster_definitions",{}).get("data",{}).get("id",None)
+        }
+        extracted_data.append(data_dic)
+    
+    return extracted_data
+
 
 def getUsers(rawdata,token,UUID):
     extracted_data = []
@@ -94,100 +479,3 @@ def getUsers(rawdata,token,UUID):
         extracted_data.append(data_dic)
 
     return extracted_data
-
-
-'''
-rw = getData('users','','e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
-dt = getUsers(rw,'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
-#print(rw)
-print(dt)
-print("terminado")
-
-
-def getStores(rawdata):
-    extracted_data =[]
-
-    for item in rawdata.get("data",[]):
-        data_dic ={
-            "id":item.get("id",None),
-            "name":item.get("attributes",{}).get("name",None),
-            "code":item.get("attributes",{}).get("code",None),
-            "active":1 if item.get("attributes",{}).get("active",None) else 0, #cambiamos el true =1, false=0
-            "full_address":item.get("attributes",{}).get("full_address",None),
-            "latitude":item.get("attributes",{}).get("coordinates",{}).get("latitude",None),
-            "longitude":item.get("attributes",{}).get("coordinates",{}).get("longitude",None),
-            "created_at":item.get("attributes",{}).get("created_at",None),
-            "brandId":item.get("relationships",{}).get("brands",{}).get("data",{}).get("id",None),
-            "zoneId":item.get("relationships",{}).get("zones",{}).get("data",{}).get("id",None)
-        }
-        extracted_data.append(data_dic)
-    return extracted_data
-
-
-
-
-rw = getData('stores?include=zones,brands','','e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
-#print(rw)
-dt = getStores(rw)
-print(dt)
-'''
-
-def getStoresdddd(rawdata):
-    extracted_data = []
-   
-    for item in rawdata:
-        id_ = item["id"].get("entityId") #id para las subtablas competitors sites y groupings
-        extracted_comp_sites =[]
-        extracted_comp_groups =[]
-
-        #id	name	code	active	full_address	latitude	longitude	create_at	brandId	zonesId
-        data_dic = {
-            "EntityId": item.get("id", {}).get("entityId", None),
-            "Adress": item.get('data', {}).get('address', None),
-            "Adress2": item.get('data', {}).get('address2', None),
-            "Adress3": item.get('data', {}).get('address3', None),
-            "Adress4": item.get('data', {}).get('address4', None),
-            "networkId": item.get('data', {}).get('network', {}).get('entityId', None),  # Maneja el caso cuando 'network' no existe
-            "Latitud": item.get('data', {}).get('latitude', None),
-            "Longitud": item.get('data', {}).get('longitude', None),
-            "name": item.get('data', {}).get('name', None),
-            "achievedVolume": item.get('data', {}).get('achievedVolume', None),
-            "areaEntityId": item.get('data', {}).get('area', {}).get('entityId', None),
-            "brandEntityId": item.get('data', {}).get('brand', {}).get('entityId', None),
-            "channelOfTradeEntityId": item.get('data', {}).get('channelOfTrade', {}).get('entityId', None),
-            "distanceToNearestOwnSite": item.get('data', {}).get('distanceToNearestOwnSite', None),
-            "SiteType2": item.get("id", {}).get("entityVariant", None)
-        }
-
-        #SITES DE COMPETIDORES
-        rawdata2 = item['data'].get('competitorSites')
-        if rawdata2:
-            for item2 in rawdata2:
-                data_dic2 ={
-                    "EntityId":id_,
-                    "competitorSitesId":item2.get('entityId')
-                }
-                extracted_comp_sites.append(data_dic2)
-
-        #GRUPOS
-        rawdata3 = item['data'].get('siteGroupings')
-        if rawdata3:
-            for item3 in rawdata3:
-                data_dic3 ={
-                    "EntityId":id_,
-                    "siteGroupingValueId":item3.get('siteGroupingValueId'),
-                    "name":item3.get('name'),
-                    "type":item3.get('type'),
-                    "optionName":item3.get('optionName')
-                }
-                extracted_comp_groups.append(data_dic3)
-
-        record = {
-            "SiteInfo": data_dic,
-            "CompetitorSites": extracted_comp_sites,
-            "SiteGroupings": extracted_comp_groups
-        }
-
-        extracted_data.append(record)
-    return extracted_data
-
