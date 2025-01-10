@@ -332,6 +332,10 @@ def getProducts(token,UUID,nro_page,per_page):
     extracted_data =[]
     extracted_data_source =[]
 
+    data_dic ={
+        "data":"",
+    }
+
     if rw:
         dt = rw.get("data",[])
         if dt:
@@ -347,16 +351,18 @@ def getProducts(token,UUID,nro_page,per_page):
                 }
                 extracted_data.append(data_dic)
             
-            totpag = rw['meta']['pagination'].get('total', 0)
-    
-    data_dic ={
-        "data":extracted_data,
-        "records":totpag
-    }
+            #totpag = rw['meta']['pagination'].get('total', 0)
+
+            #actualizando el diccionario
+            data_dic["data"] = extracted_data
+            #data_dic["records"] = totpag
+            
 
     extracted_data_source.append(data_dic)
 
     return extracted_data_source
+
+
 
 def getTags(token,UUID,records):
 
@@ -504,8 +510,14 @@ def help():
     PAGE = 1
     PER_PAGE = 50 #Cantidad de datos por pagina
 
-    dt = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',PAGE,PER_PAGE)
-    print(dt)
+    rw = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',PAGE,PER_PAGE)
+    dt = rw[0].get("data",[])
+    if dt:
+        for itm in dt:
+            print(itm.get("sku",None))
+    else:
+        print("ya no hay datos")
+
 
     TAG ***********************
     rw = getTags('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',1000)
