@@ -332,19 +332,22 @@ def getProducts(token,UUID,nro_page,per_page):
     extracted_data =[]
     extracted_data_source =[]
 
-    for item in rw.get("data",[]):
-        data_dic ={
-            "id":item.get("id",None),
-            "name":item.get("attributes",{}).get("name",None),
-            "sku":item.get("attributes",{}).get("sku",None),
-            "ean":item.get("attributes",{}).get("ean",None),
-            "created_at":item.get("attributes",{}).get("created_at",None),
-            "active":1 if item.get("attributes",{}).get("active",None) else 0,
-            "categoriasId":item.get("relationships",{}).get("categories",{}).get("data",{}).get("id",None)
-        }
-        extracted_data.append(data_dic)
-    
-    totpag = rw['meta']['pagination'].get('total', 0)
+    if rw:
+        dt = rw.get("data",[])
+        if dt:
+            for item in dt:
+                data_dic ={
+                    "id":item.get("id",None),
+                    "name":item.get("attributes",{}).get("name",None),
+                    "sku":item.get("attributes",{}).get("sku",None),
+                    "ean":item.get("attributes",{}).get("ean",None),
+                    "created_at":item.get("attributes",{}).get("created_at",None),
+                    "active":1 if item.get("attributes",{}).get("active",None) else 0,
+                    "categoriasId":item.get("relationships",{}).get("categories",{}).get("data",{}).get("id",None)
+                }
+                extracted_data.append(data_dic)
+            
+            totpag = rw['meta']['pagination'].get('total', 0)
     
     data_dic ={
         "data":extracted_data,
@@ -443,7 +446,7 @@ def getUsers(token,UUID,records):
             "last_name":item.get("attributes",{}).get("last_name",None),
             "email":item.get("attributes",{}).get("email",None),
             "country":item.get("attributes",{}).get("country",None),
-            "active":item.get("attributes",{}).get("active",None),
+            "active":1 if item.get("attributes",{}).get("active",None) else 0,
             "accountable_areas":""
         }
         
