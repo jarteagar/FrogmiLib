@@ -1,6 +1,5 @@
 # Importamos las funciones de 'funciones.py' 
 from .funciones import (
-    getData,
     getStores,
     getAreas,
     getUsers,
@@ -30,19 +29,15 @@ def OSVersion():
     Ejemplos de invocacion de API via la libreria ======================================
 
     STORES **************
-    rw = getData('stores','include=zones,brands',token,UUID,1000)
-    dt = getStores(rw)
+    dt = getStores('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',1000)
     print(dt)
 
-
     accountable_areas ***************
-    rw = getData('accountable_areas','',token,UUID,30)
-    dt = getAreas(rw)
+    dt = getAreas('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',30)
     print(dt)
 
     USERS *********************
-    rw = getData('users','',token,UUID,500)
-    dt = getUsers(rw,token,UUID) #para obtener el  'accountable_areas' relacionado al USER
+    dt = getUsers('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',500)
     print(dt)
 
     
@@ -56,9 +51,8 @@ def OSVersion():
     print(dt)
 
     TAG ***********************
-    rw = getData("tags",'','e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',1000)
-    dt = getTags(rw,'e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0')
-    print(dt)
+    rw = getTags('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',1000)
+    print(rw)
 
     RESULTS *********************
     sid =''

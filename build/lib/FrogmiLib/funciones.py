@@ -345,8 +345,9 @@ def getProducts(token,UUID,nro_page,per_page):
 
     return extracted_data_source
 
+def getTags(token,UUID,records):
 
-def getTags(rawdata,token,UUID):
+    rawdata = getData("tags",'',token,UUID,records)
     extracted_data =[]
 
     for item in rawdata.get("data",[]):
@@ -379,7 +380,9 @@ def getTags(rawdata,token,UUID):
     
     return extracted_data
 
-def getStores(rawdata):
+def getStores(token,UUID,records):
+   
+    rawdata = getData('stores','include=zones,brands',token,UUID,records)
     extracted_data = []
 
     for item in rawdata.get("data", []):
@@ -399,7 +402,11 @@ def getStores(rawdata):
 
     return extracted_data
 
-def getAreas(rawdata):
+def getAreas(token,UUID,records):
+
+    rawdata = getData('accountable_areas','',token,UUID,records)
+
+
     extracted_data = []
     for item in rawdata.get("data",[]):
         data_dic ={
@@ -412,7 +419,10 @@ def getAreas(rawdata):
     
     return extracted_data
 
-def getUsers(rawdata,token,UUID):
+def getUsers(token,UUID,records):
+    #records = 500
+    rawdata = getData('users','',token,UUID,records)
+
     extracted_data = []
     for item in rawdata.get("data",[]):
         data_dic ={
@@ -435,3 +445,4 @@ def getUsers(rawdata,token,UUID):
         extracted_data.append(data_dic)
 
     return extracted_data
+
