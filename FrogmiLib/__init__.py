@@ -1,6 +1,5 @@
 # Importamos las funciones de 'funciones.py' 
 from .funciones import (
-    getToken,
     getData,
     getStores,
     getAreas,
