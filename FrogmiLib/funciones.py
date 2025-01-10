@@ -16,7 +16,12 @@ def getSubData(url,token,UUID):
         return ""
     else:
         rawdata = json.loads(response.text)
-        return rawdata
+
+        if isinstance(rawdata, dict):
+            #si es un diccionaro de datos
+            return rawdata
+        else:
+            return ""
     
 #para datos que sean menor o iguala 1000 registros, si fuea de más usar la funcion que hace iteraciones (getDataV2)
 
@@ -143,44 +148,49 @@ def getActivites(token,UUID,urlFilter,page,records):
         url_ = item.get("relationships",{}).get("questions",{}).get("links",{}).get("related")
         if url_:
             rw = getSubData(url_,token,UUID)
-            for iteq in rw.get("data",[]):
-                data_qst ={
-                    "activityid":id_,
-                    "questionid":iteq.get("id",None),
-                    "type":iteq.get("type",None),
-                    "name":iteq.get("attributes",{}).get("name",None),
-                    "question_type":iteq.get("attributes",{}).get("question_type",None),
-                    "order":iteq.get("attributes",{}).get("order",None),
-                    "order_tree":iteq.get("attributes",{}).get("order_tree",None),
-                    "min_boundary":iteq.get("attributes",{}).get("min_boundary",None),
-                    "max_boundary":iteq.get("attributes",{}).get("max_boundary",None),
-                    "input_regex":iteq.get("attributes",{}).get("input_regex",None),
-                    "expression":iteq.get("attributes",{}).get("expression",None)
-                }
-                extracted_qst.append(data_qst) #acumulando las preguntas
 
-                #recolectando las alternativas asociadas:
-                rw_alter = iteq.get("relationships",{}).get("alternatives")  #("alternatives",{})
-                for itm in rw_alter.get("data",[]):
-                    dic_alt={
-                        "activityid":id_,
-                        "alternativeid":itm.get("id",None),
-                        "type":itm.get("type",None),
-                        "name":itm.get("attributes",{}).get("name",None),
-                        "value":itm.get("attributes",{}).get("value",None),
-                        "accomplishment":itm.get("attributes",{}).get("accomplishment",None),
-                        "order":itm.get("attributes",{}).get("order",None)
-                    }
-                    extracted_alt.append(dic_alt) #acumulando alternativas
-                
-                #recolectando tag asociados:
-                rw_tags = iteq.get("relationships",{}).get("tags") #("tags",{})
-                for itm in rw_tags.get("data",[]):
-                    dic_tag={
-                        "activityid":id_,
-                        "tagid":itm.get("id",None)
-                    }
-                    extracted_tag.append(dic_tag)
+            if rw:
+                #print(f'el RW es: {rw}')
+                dt = rw.get("data",[])
+                if dt:
+                    for iteq in dt: #rw.get("data",[]):
+                        data_qst ={
+                            "activityid":id_,
+                            "questionid":iteq.get("id",None),
+                            "type":iteq.get("type",None),
+                            "name":iteq.get("attributes",{}).get("name",None),
+                            "question_type":iteq.get("attributes",{}).get("question_type",None),
+                            "order":iteq.get("attributes",{}).get("order",None),
+                            "order_tree":iteq.get("attributes",{}).get("order_tree",None),
+                            "min_boundary":iteq.get("attributes",{}).get("min_boundary",None),
+                            "max_boundary":iteq.get("attributes",{}).get("max_boundary",None),
+                            "input_regex":iteq.get("attributes",{}).get("input_regex",None),
+                            "expression":iteq.get("attributes",{}).get("expression",None)
+                        }
+                        extracted_qst.append(data_qst) #acumulando las preguntas
+
+                        #recolectando las alternativas asociadas:
+                        rw_alter = iteq.get("relationships",{}).get("alternatives")  #("alternatives",{})
+                        for itm in rw_alter.get("data",[]):
+                            dic_alt={
+                                "activityid":id_,
+                                "alternativeid":itm.get("id",None),
+                                "type":itm.get("type",None),
+                                "name":itm.get("attributes",{}).get("name",None),
+                                "value":itm.get("attributes",{}).get("value",None),
+                                "accomplishment":itm.get("attributes",{}).get("accomplishment",None),
+                                "order":itm.get("attributes",{}).get("order",None)
+                            }
+                            extracted_alt.append(dic_alt) #acumulando alternativas
+                        
+                        #recolectando tag asociados:
+                        rw_tags = iteq.get("relationships",{}).get("tags") #("tags",{})
+                        for itm in rw_tags.get("data",[]):
+                            dic_tag={
+                                "activityid":id_,
+                                "tagid":itm.get("id",None)
+                            }
+                            extracted_tag.append(dic_tag)
 
     dic_data ={
         "act":extracted_act,
@@ -371,10 +381,12 @@ def getTags(token,UUID,records):
                 data_dic["sub_kpi"] = itm.get("id",None)  #el id
                 url_ = itm.get("links",{}).get("related",None)
 
-        if url_ != "":
+        if url_:
             rw = getSubData(url_,token,UUID)
-            data_dic["sub_name"] = rw.get("data",{}).get("attributes",{}).get("name",None) #nombre
-            data_dic["sub_tag_type"] = rw.get("data",{}).get("attributes",{}).get("tag_type",None) #tipo
+
+            if rw:
+                    data_dic["sub_name"] = rw.get("data",{}).get("attributes",{}).get("name",None) #nombre
+                    data_dic["sub_tag_type"] = rw.get("data",{}).get("attributes",{}).get("tag_type",None) #tipo
         
         extracted_data.append(data_dic)
     
@@ -436,13 +448,110 @@ def getUsers(token,UUID,records):
         }
         
         url_ = item.get("relationships",{}).get("accountable_areas",{}).get("links",{}).get("related",None)
-        #relationships
-        rw = getSubData(url_,token,UUID)
-
-        for itm in rw.get("data",[]):
-            data_dic["accountable_areas"] = itm.get("id",None)
         
+
+        #relationships
+        if url_:
+            rw = getSubData(url_,token,UUID)
+            if rw:
+                #print(f'el RW es: {rw}')
+                dt = rw.get("data",[])
+                if dt:
+                    for itm in dt:
+                        data_dic["accountable_areas"] = itm.get("id",None)
+            
         extracted_data.append(data_dic)
 
     return extracted_data
 
+def help():
+    det = """
+    Version 2.5 =========================================================================
+    Libreria para agilizar el uso de las api de frogmi 5.1.2025
+    USO:
+    Consultar con John Arteaga!!!
+    
+    Nota importante _____
+    Para modificar las columnas que se retornan, se debe editar el archivo funciones.py
+    agregar las columnas en la funcion correspondiente y volver a compilar el archivo WHL:
+
+    --> python .\setup.py bdist_wheel
+
+    Publicar en GITHUB para obtener la version linux del archivo WHL y cagar en el Lakehouse
+
+
+    Ejemplos de invocacion de API via la libreria ======================================
+
+    STORES **************
+    dt = getStores('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',1000)
+    print(dt)
+
+    accountable_areas ***************
+    dt = getAreas('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',30)
+    print(dt)
+
+    USERS *********************
+    dt = getUsers('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',500)
+    print(dt)
+
+    
+    PRODUCTOS *****************
+    NOTA: Regresa un arreglo con 2 valores, la DATA y el TOTAL REGISTROS(Records)
+
+    PAGE = 1
+    PER_PAGE = 50 #Cantidad de datos por pagina
+
+    dt = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',PAGE,PER_PAGE)
+    print(dt)
+
+    TAG ***********************
+    rw = getTags('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',1000)
+    print(rw)
+
+    RESULTS *********************
+    sid =''
+    k = 0
+    while k <=4:
+        dt = getResults('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"filters[period][from]=2024-01-05&filters[period][to]=2024-01-05",sid,100)
+        print(dt)
+        sid = dt[0].get("scroll_id",None)
+        print(sid)
+        k = k + 1
+
+        
+    EVENTS *******************************
+    sid =''
+    k = 0
+    page_ = 1
+    per_page_ = 1000
+    while k <=5:
+        print(page_)
+        dt = getEvents('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"filters[period][from]=2025-01-05&filters[period][to]=2025-01-05",page_,per_page_)
+
+        data = dt[0].get("data", [])
+        reco = dt[0].get("records",None)
+        if data:
+
+            print(data)
+            print(f"= NEXT EVENT ======================================================================================!!!!")
+            page_ = page_ + 1
+            k = k + 1
+        else:
+            print("= FINALIZADO **************************************************************>>>>>>>>>>>>>>>>>>>>>>>>>>>!!!!")
+            break
+            
+    ACTIVIES **************************
+    page = 1
+    k = 0
+    while k <=1:
+        dt = getActivites('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',"",page,2)
+        print(dt)
+        k = k + 1
+        print(page)
+        page = page + 1
+
+            
+    """
+ 
+    
+    return det
