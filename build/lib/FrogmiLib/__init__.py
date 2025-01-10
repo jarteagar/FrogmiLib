@@ -10,7 +10,7 @@ from .funciones import (
     getActivites
 )
 
-def OSVersion():
+def help():
     det = """
     Version 2.4 =========================================================================
     Libreria para agilizar el uso de las api de frogmi 5.1.2025
