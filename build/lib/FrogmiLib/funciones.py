@@ -63,7 +63,7 @@ def getDataByPage(urlApi,urlFilter,token,UUID,page,records):
         queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?page={page}&per_page={records}'
     else:
         queryURL = f'https://api.frogmi.com/api/v3/{urlApi}?{urlFilter}&page={page}&per_page={records}'
-    
+    print(queryURL)
     response = requests.get(queryURL,headers=authHeader)
 
     if response.status_code != 200:
@@ -330,12 +330,8 @@ def getProducts(token,UUID,nro_page,per_page):
     rw = getDataByPage(urlApi,'',token,UUID,nro_page,per_page)
 
     extracted_data =[]
-    extracted_data_source =[]
-
-    data_dic ={
-        "data":"",
-    }
-
+    #extracted_data_source =[]
+    print(rw)
     if rw:
         dt = rw.get("data",[])
         if dt:
@@ -354,15 +350,16 @@ def getProducts(token,UUID,nro_page,per_page):
             #totpag = rw['meta']['pagination'].get('total', 0)
 
             #actualizando el diccionario
-            data_dic["data"] = extracted_data
+            #data_dic["data"] = extracted_data
             #data_dic["records"] = totpag
             
 
-    extracted_data_source.append(data_dic)
+    #extracted_data_source.append(data_dic)
 
-    return extracted_data_source
+    return extracted_data #_source
 
-
+#extracted_data = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',6,300)
+#print(extracted_data)
 
 def getTags(token,UUID,records):
 
