@@ -210,7 +210,7 @@ def getEvents(token,UUID,urlFilter,page,records):
     #rw = getDataById(urlApi,urlFilter,scroll_id,token,UUID,records)
     rw = getDataByPage(urlApi,urlFilter,token,UUID,page,records)
 
-    extracted_data = []
+    #extracted_data = []
     extracted_event =[]
 
     for item in rw.get("data",[]):
@@ -231,16 +231,16 @@ def getEvents(token,UUID,urlFilter,page,records):
         extracted_event.append(data_dic)
 
     #scroll_id_ = rw['links'].get('scroll_id', 0)
-    totpag = rw['meta']['pagination'].get('total', 0)
+    #totpag = rw['meta']['pagination'].get('total', 0)
     
-    data_dic2 ={
-        "data":extracted_event,
-        "records":totpag
-    }
+    #data_dic2 ={
+     #   "data":extracted_event,
+      #  "records":totpag
+    #}
 
-    extracted_data.append(data_dic2)
+    #extracted_data.append(data_dic2)
 
-    return extracted_data
+    return extracted_event
 
 def getResults(token,UUID,urlFilter,scroll_id,records):
     urlApi ="store_beat/results"
@@ -331,7 +331,6 @@ def getProducts(token,UUID,nro_page,per_page):
 
     extracted_data =[]
     #extracted_data_source =[]
-    print(rw)
     if rw:
         dt = rw.get("data",[])
         if dt:
@@ -358,8 +357,8 @@ def getProducts(token,UUID,nro_page,per_page):
 
     return extracted_data #_source
 
-#extracted_data = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',6,300)
-#print(extracted_data)
+extracted_data = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',5,300)
+print(extracted_data)
 
 def getTags(token,UUID,records):
 
@@ -506,8 +505,9 @@ def help():
 
     PAGE = 1
     PER_PAGE = 50 #Cantidad de datos por pagina
-
-    rw = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',PAGE,PER_PAGE)
+    rw = getProducts('e8c7821908563ac1101c977fbd80f385', 'ddcd1b2f-e468-481e-8720-7cd386bec5a0', PAGE,PER_PAGE)
+    
+   
     dt = rw[0].get("data",[])
     if dt:
         for itm in dt:
