@@ -202,12 +202,10 @@ def getActivites(token,UUID,urlFilter,page,records):
 
     return extracted_data
 
-def getEvents(token,UUID,urlFilter,page,records):
+def getEvents(token,UUID,date_,page_,records_):
     urlApi ="store_beat/events"
-    #urlFilter="filters[period][from]=2024-01-07&filters[period][to]=2024-01-07"
- 
-    #rw = getDataById(urlApi,urlFilter,scroll_id,token,UUID,records)
-    rw = getDataByPage(urlApi,urlFilter,token,UUID,page,records)
+    urlFilter=f"filters[period][from]={date_}&filters[period][to]={date_}"
+    rw = getDataByPage(urlApi,urlFilter,token,UUID,page_,records_)
 
     #extracted_data = []
     extracted_event =[]
