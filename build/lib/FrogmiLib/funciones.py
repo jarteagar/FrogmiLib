@@ -150,7 +150,6 @@ def getActivites(token,UUID,urlFilter,page,records):
             rw = getSubData(url_,token,UUID)
 
             if rw:
-                #print(f'el RW es: {rw}')
                 dt = rw.get("data",[])
                 if dt:
                     for iteq in dt: #rw.get("data",[]):
@@ -357,9 +356,6 @@ def getProducts(token,UUID,nro_page,per_page):
 
     return extracted_data #_source
 
-extracted_data = getProducts('e8c7821908563ac1101c977fbd80f385','ddcd1b2f-e468-481e-8720-7cd386bec5a0',5,300)
-print(extracted_data)
-
 def getTags(token,UUID,records):
 
     rawdata = getData("tags",'',token,UUID,records)
@@ -378,7 +374,6 @@ def getTags(token,UUID,records):
 
         #complementando datos del KPI si fuera el caso:
         subkpi = item.get("relationships",{}) .get("tags")
-        #print(f'el subkpi ===> {subkpi}')
 
         url_ =""
         if subkpi:
@@ -459,7 +454,6 @@ def getUsers(token,UUID,records):
         if url_:
             rw = getSubData(url_,token,UUID)
             if rw:
-                #print(f'el RW es: {rw}')
                 dt = rw.get("data",[])
                 if dt:
                     for itm in dt:

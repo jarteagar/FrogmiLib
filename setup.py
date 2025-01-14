@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="FrogmiLib",                # Nombre del paquete
-    version="1.3",                      # Versión inicial
+    version="1.4",                      # Versión inicial
     description="Descripción de FrogmiLib",  # Breve descripción
     author="John Arteaga",                 # Autor
     packages=find_packages(),           # Encuentra automáticamente todos los módulos
