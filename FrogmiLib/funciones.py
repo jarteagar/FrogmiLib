@@ -75,8 +75,10 @@ def getDataByPage(urlApi,urlFilter,token,UUID,page,records):
 #obtiene data tomando en cuenta SCROLL_ID =======================================================
 #para este ENDPOINT debe pasarse el FILTER y RECORDS(per_page) en la primera consulta
 #en la segunda consulta se pasa adiciona el SCROLL_ID y el orden dir=desc
-def getDataById(urlApi,urlFilter,scroll_id,token,UUID,records):
+def getDataById(urlApi,date_,scroll_id,token,UUID,records):
 
+    urlFilter=f"filters[period][from]={date_}&filters[period][to]={date_}"
+ 
     authHeader = {
         "Authorization": "Bearer %s" %token,
         "User-Agent": "API-CLIENT",
@@ -202,6 +204,8 @@ def getActivites(token,UUID,urlFilter,page,records):
 
     return extracted_data
 
+
+
 def getEvents(token,UUID,date_,page_,records_):
     urlApi ="store_beat/events"
     urlFilter=f"filters[period][from]={date_}&filters[period][to]={date_}"
@@ -239,11 +243,10 @@ def getEvents(token,UUID,date_,page_,records_):
 
     return extracted_event
 
-def getResults(token,UUID,urlFilter,scroll_id,records):
+def getResults(token,UUID,date_,scroll_id,records):
     urlApi ="store_beat/results"
-    #urlFilter="filters[period][from]=2024-01-07&filters[period][to]=2024-01-07"
- 
-    rw = getDataById(urlApi,urlFilter,scroll_id,token,UUID,records)
+    
+    rw = getDataById(urlApi,date_,scroll_id,token,UUID,records)
     extracted_data =[]  #pagina
     extracted_data2 =[] #acumulado_pagina
 
@@ -320,6 +323,7 @@ def getResults(token,UUID,urlFilter,scroll_id,records):
     extracted_data2.append(data_dic)
 
     return extracted_data2
+
 
 def getProducts(token,UUID,nro_page,per_page):
     urlApi="products"
