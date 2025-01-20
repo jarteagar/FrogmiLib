@@ -15,6 +15,7 @@ def getSubData(url,token,UUID):
     if response.status_code != 200:
         return ""
     else:
+        response.encoding = 'utf-8'
         rawdata = json.loads(response.text)
 
         if isinstance(rawdata, dict):
@@ -46,6 +47,7 @@ def getData(urlApi,urlFilter,token,UUID,records):
     if response.status_code != 200:
         return ""
     else:
+        response.encoding = 'utf-8'
         rawdata = json.loads(response.text)
         return rawdata
 
@@ -69,6 +71,7 @@ def getDataByPage(urlApi,urlFilter,token,UUID,page,records):
     if response.status_code != 200:
         return ""
     else:
+        response.encoding = 'utf-8'
         rawdata = json.loads(response.text)
         return rawdata
 
@@ -98,6 +101,7 @@ def getDataById(urlApi,date_,scroll_id,token,UUID,records):
     if response.status_code != 200:
         return ""
     else:
+        response.encoding = 'utf-8'
         rawdata = json.loads(response.text)
         return rawdata
 
@@ -107,6 +111,9 @@ def safe_get(data, *keys):
         if data is None:
             return None
     return data
+
+
+
 
 #activites and questionary
 def getActivites(token,UUID,urlFilter,page,records):
@@ -203,7 +210,6 @@ def getActivites(token,UUID,urlFilter,page,records):
     extracted_data.append(dic_data)
 
     return extracted_data
-
 
 
 def getEvents(token,UUID,date_,page_,records_):
@@ -323,7 +329,6 @@ def getResults(token,UUID,date_,scroll_id,records):
     extracted_data2.append(data_dic)
 
     return extracted_data2
-
 
 def getProducts(token,UUID,nro_page,per_page):
     urlApi="products"
