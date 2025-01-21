@@ -162,9 +162,12 @@ def getActivites(token,UUID,urlFilter,page,records):
                 dt = rw.get("data",[])
                 if dt:
                     for iteq in dt: #rw.get("data",[]):
+                        
+                        qst_id_ = iteq.get("id",None)
+
                         data_qst ={
                             "activityid":id_,
-                            "questionid":iteq.get("id",None),
+                            "questionid":qst_id_,
                             "type":iteq.get("type",None),
                             "name":iteq.get("attributes",{}).get("name",None),
                             "question_type":iteq.get("attributes",{}).get("question_type",None),
@@ -182,6 +185,7 @@ def getActivites(token,UUID,urlFilter,page,records):
                         for itm in rw_alter.get("data",[]):
                             dic_alt={
                                 "activityid":id_,
+                                "questionid":qst_id_,
                                 "alternativeid":itm.get("id",None),
                                 "type":itm.get("type",None),
                                 "name":itm.get("attributes",{}).get("name",None),
@@ -196,6 +200,7 @@ def getActivites(token,UUID,urlFilter,page,records):
                         for itm in rw_tags.get("data",[]):
                             dic_tag={
                                 "activityid":id_,
+                                "questionid":qst_id_,
                                 "tagid":itm.get("id",None)
                             }
                             extracted_tag.append(dic_tag)
