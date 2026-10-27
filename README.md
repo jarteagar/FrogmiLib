@@ -1,85 +1,65 @@
 import json
-import sys
 from pathlib import Path
 
-# Ruta del JSON
-RUTA_JSON = Path("modelos/UDV_Modelo_de_Datos_Logico_V0.640.json")
-NOMBRE_ENTIDAD = "f_reportegestion"
+SALIDA_DIR = Path("salidas_cubowu")
+OBJETIVO = "F_REPORTEGESTION"
 
-def main():
-    if not RUTA_JSON.exists():
-        print(f"No se encuentra el archivo: {RUTA_JSON}")
-        sys.exit(1)
+# Buscar el jsonl generado
+jsonl = None
+for p in SALIDA_DIR.glob("*.jsonl"):
+    jsonl = p
+    break
 
-    try:
-        with RUTA_JSON.open(encoding="utf-8-sig") as f:
-            doc = json.load(f)
-    except Exception as e:
-        print(f"Error al leer el JSON: {e}")
-        sys.exit(1)
+if not jsonl:
+    print("No se encontró ningún .jsonl en salidas_cubowu")
+    raise SystemExit
 
-    entidades = doc.get("entidades", [])
-    atributos = doc.get("atributos", [])
+print(f"Leyendo: {jsonl}")
+encontrado = []
 
-    # Buscar la entidad por nombre (case-insensitive)
-    objetivo = None
-    for e in entidades:
-        nombre = (e.get("nombre") or "").strip().lower()
-        if nombre == NOMBRE_ENTIDAD.lower():
-            objetivo = e
-            break
+with jsonl.open(encoding="utf-8-sig") as f:
+    for linea in f:
+        linea = linea.strip()
+        if not linea:
+            continue
+        try:
+            r = json.loads(linea)
+        except:
+            continue
+        nombre = (r.get("nombre") or "").strip().upper()
+        if nombre == OBJETIVO.upper():
+            encontrado.append(r)
 
-    if not objetivo:
-        print(f"No se encontró la entidad con nombre: '{NOMBRE_ENTIDAD}'")
-        sys.exit(1)
+if not encontrado:
+    print(f"No se encontró {OBJETIVO} en el jsonl")
+    raise SystemExit
 
-    eid_objetivo = objetivo.get("id")
+for i, obj in enumerate(encontrado):
+    print("="*80)
+    print(f"OBJETO #{i+1}")
+    print("Clase:", obj.get("clase"))
+    print("Nombre:", obj.get("nombre"))
+    print("ObjetoId:", obj.get("objeto_id"))
+    print("="*80)
+    props = obj.get("propiedades") or {}
+    # Mostrar solo las que nos interesan primero
+    claves_interes = ["Definition","Comment","Long_Description","Entity.Comment","Entity.Definition","Table.Comment","Table.Definition","Physical_Name","User_Formatted_Physical_Name","Long_Id"]
+    print("\n--- CLAVES INTERESANTES ---")
+    for k in claves_interes:
+        if k in props:
+            print(f"{k}: {props[k]}")
+    print("\n--- TODAS LAS PROPIEDADES ---")
+    for k in sorted(props.keys()):
+        v = props[k]
+        # acortar un poco si es muy largo pero queremos verlo
+        if isinstance(v, str) and len(v) > 200:
+            print(f"{k}: {v[:200]} ... [truncado]")
+        else:
+            print(f"{k}: {v}")
+    print("\n")
 
-    if not eid_objetivo:
-        print("La entidad encontrada no tiene 'id'. Revisa el JSON.")
-        sys.exit(1)
-
-    # Filtrar atributos por entidad_id
-    atributos_entidad = [a for a in atributos if a.get("entidad_id") == eid_objetivo]
-
-    # Ordenar igual que como se consume (por orden, luego por columna física)
-    atributos_entidad.sort(
-        key=lambda x: (
-            x.get("orden") is None,
-            x.get("orden") if x.get("orden") is not None else 0,
-            (x.get("columna_fisica") or "").lower(),
-        )
-    )
-
-    # Imprimir resultado
-    print("=== ENTIDAD ===")
-    print(json.dumps(objetivo, ensure_ascii=False, indent=2))
-    print(f"\n=== ATRIBUTOS ({len(atributos_entidad)}) ===")
-
-    for a in atributos_entidad:
-        print(
-            f"- columna_fisica: {a.get('columna_fisica') or 'NULL'} | "
-            f"atributo: {a.get('atributo') or 'NULL'} | "
-            f"pk: {a.get('pk')} | fk: {a.get('fk')} | "
-            f"obligatorio: {a.get('obligatorio')} | "
-            f"orden: {a.get('orden')} | "
-            f"descripcion: {a.get('descripcion') or 'NULL'}"
-        )
-
-    # Guardar salida completa
-    salida = Path("f_reportegestion_extraccion_json.json")
-    with salida.open("w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "entidad": objetivo,
-                "atributos": atributos_entidad,
-                "total_atributos": len(atributos_entidad),
-            },
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
-    print(f"\nGuardado completo en: {salida.resolve()}")
-
-if __name__ == "__main__":
-    main()
+# Guardar completo
+out = Path("f_reportegestion_crudo.json")
+with out.open("w", encoding="utf-8") as f:
+    json.dump(encontrado, f, ensure_ascii=False, indent=2)
+print(f"Guardado completo en {out.resolve()}")
